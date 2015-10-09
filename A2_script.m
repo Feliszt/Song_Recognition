@@ -11,7 +11,7 @@ clc
 % mel3 = audioread('melody_3.wav') ;
 
    % create the vector of frequencies of from the 1st to the 4th scale
-frequencies = [ 65.41 , 69.30 , 73.42, 77.78, 82.41, 87.31, 92.50, 98.80, 103.83, 
+frequencies = [ 65.41 , 69.30 , 73.42, 77.78, 82.41, 87.31, 92.50, 98.80, 103.83, 110.00, 116.54, 123.47, 130.81, 138.59, 146.83, 155.56, 164.81, 174.61, 185.00, 196.00, 207.65, 220.00, 233.09, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88 ]  ;
    % uncomment to play the sweet tunes
 sound(mel2, fe)
 
@@ -28,9 +28,10 @@ subplot(2,1,2), plot(T(800:1100), mel1(800:1100)), title('melody 1 zoomed in'), 
 close all  
 
    % uncomment to create the frIsequence matrix from the audio
-% frIsequence1 = GetMusicFeatures(mel1, fe, 0.02) ;
-% frIsequence2 = GetMusicFeatures(mel2, fe, 0.02) ;
-% frIsequence3 = GetMusicFeatures(mel3, fe, 0.02) ;
+winlen = 0.03 ;
+frIsequence1 = GetMusicFeatures(mel1, fe, winlen) ;
+frIsequence2 = GetMusicFeatures(mel2, fe, winlen) ;
+frIsequence3 = GetMusicFeatures(mel3, fe, winlen) ;
 
 
    % get the abscisses (number of windows)
@@ -41,7 +42,6 @@ abs3 = (1:length(frIsequence3)) ;
    % plot pitch
 figure
 subplot(3,1,1)
-% set(gca, 'Yscale', 'log'),
 [ax, ~, ~] = plotyy(abs1, log(frIsequence1(1,:)), abs1, log(frIsequence1(3,:)));
 title('melody 1'),
 ylabel(ax(1),'pitch (Hz)') % label left y-axis
@@ -49,7 +49,6 @@ ylabel(ax(2),'Intensity') % label right y-axis
 xlabel('window number') ;
 
 subplot(3,1,2)
-% set(gca, 'Yscale', 'log'),
 [ax, ~, ~] = plotyy(abs2, frIsequence2(1,:), abs2, frIsequence2(3,:));
 title('melody 2'),
 ylabel(ax(1),'pitch (Hz)') % label left y-axis
@@ -57,12 +56,48 @@ ylabel(ax(2),'Intensity') % label right y-axis
 xlabel('window number') ;
 
 subplot(3,1,3)
-% set(gca, 'Yscale', 'log'),
 [ax, ~, ~] = plotyy(abs3, frIsequence3(1,:), abs3, frIsequence3(3,:)); 
 title('melody 3'), 
 ylabel(ax(1),'pitch (Hz)') % label left y-axis
 ylabel(ax(2),'Intensity') % label right y-axis
 xlabel('window number') ;
+
+   %% Mean Intensity calculations
+close all
+
+    % get intensity
+intensity1 = log(frIsequence1(3,:)) ;
+intensity2 = log(frIsequence2(3,:)) ;
+intensity3 = log(frIsequence3(3,:)) ;
+
+mean1 = mean(intensity1) ;
+mean2 = mean(intensity2) ;
+mean3 = mean(intensity3) ;
+
+    % calculate all binary vectors of nots
+binnote1 = intensity1 < mean1 == 0 ;
+binnote1 = intensity1 >= mean1 == 1 ;
+
+binnote2 = intensity2 < mean2 == 0 ;
+binnote2 = intensity2 >= mean2 == 1 ;
+
+binnote3 = intensity3 < mean3 == 0 ;
+binnote3 = intensity3 >= mean3 == 1 ;
+   
+   % plot means
+% figure
+% subplot(3,1,1)
+% plot(abs1, intensity1, abs1, mean1.*ones(1,length(intensity1)), abs1, binnote1);
+% 
+% subplot(3,1,2)
+% plot(abs2, intensity2, abs2, mean2.*ones(1,length(intensity2)), abs2, binnote2);
+% 
+% subplot(3,1,3)
+% plot(abs3, intensity3, abs3, mean3.*ones(1,length(intensity3)), abs3, binnote3);
+
+
+    % clean binnotes
+
 
 
    %% Call feature extractor
@@ -72,7 +107,7 @@ frIsequence = frIsequence3 ;
 abs = abs3 ;
 
   % Isolate the log-pitch and the log-intensity
-pitch = frIsequence(1,:) ;
+pitch = 1.5*frIsequence(1,:) ;
 intensity = log(frIsequence(3,:)) ;
 corr = frIsequence(2,:) ;
 
@@ -91,7 +126,6 @@ binnote = intensity < meanI == 0 ;
 binnote = intensity >= meanI == 1 ;
 % binnote = pitch < meanP == 1 ;
 % binnote = pitch >= meanP == 0 ;
-
 
   % plot to see if correct
 % figure
@@ -117,10 +151,9 @@ plotyy(abs, pitch_note, abs, intensity)
 
 
 binnote_label = bwlabel(binnote) ;
-N_note = max(binnote_label) ;
 notes = [] ;
-figure
-for i = 1:N_note
+% figure
+for i = 1:max(binnote_label)
     % get the binary vector that represents the note
    binnotei = binnote_label == i ; 
    binnotei = binnotei >= 1 == 1 ;
@@ -133,30 +166,50 @@ for i = 1:N_note
    lengthnote = length(pitch_notei) ;
    
    % verify that the note is not too short (it can be noise)
-   if lengthnote < 10
-       
-   else       
-        plot(1:lengthnote, pitch_notei) ;
+   if lengthnote >= 10
+        pitch_notei = pitch_notei(1+round(0.15*lengthnote):lengthnote-round(0.15*lengthnote)) ;
         notes = [ notes mean(pitch_notei) ] ;
+        
+%         subplot(max(binnote_label), 1, i)
+%         plot(pitch_notei) ;
+%         pause(0.5)
    end
 end
 
+    % We get the closest real note for each note
+for i=1:length(notes)
+   a = frequencies(notes(i) < frequencies) ;
+   b = frequencies(notes(i) >= frequencies) ;
+   
+  if ( a(1)-notes(i) < notes(i)-b(end) )
+      notes(i) = a(1) ;
+  else
+      notes(i) = b(end) ;
+  end   
+end
+
+    % We then compute the quotient between two consecutives notes
 quotnotes = zeros(1,length(notes)-1) ;
 for i=1:length(notes)-1
    quotnotes(i) = notes(i) / notes(i+1) ;    
 end
-   
 
+
+   
     %% plot features
+close all
 
 figure
 subplot(411)
-plot(quotnotes1)
+stem(quotnotes1)
 subplot(412)
-plot(quotnotes2)
+stem(quotnotes2)
 subplot(413)
-plot(quotnotes3)
+stem(quotnotes3)
 subplot(414)
-plot(quotnotes4)
+stem(quotnotes4)
+
+figure
+plot(1:10, quotnotes1, 1:9, quotnotes2) %, 1:9, quotnotes3, 1:9, quotnotes4) 
     
     
