@@ -11,9 +11,9 @@ mel2 = audioread('melody_2.wav') ;
 mel3 = audioread('melody_3.wav') ;
 
    % create the vector of frequencies of from the 1st to the 4th scale
-frequencies = [ 65.41 , 69.30 , 73.42, 77.78, 82.41, 87.31, 92.50, 98.80, 103.83, 110.00, 116.54, 123.47, 130.81, 138.59, 146.83, 155.56, 164.81, 174.61, 185.00, 196.00, 207.65, 220.00, 233.09, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88 ]  ;
+% frequencies = [ 65.41 , 69.30 , 73.42, 77.78, 82.41, 87.31, 92.50, 98.80, 103.83, 110.00, 116.54, 123.47, 130.81, 138.59, 146.83, 155.56, 164.81, 174.61, 185.00, 196.00, 207.65, 220.00, 233.09, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88 ]  ;
    % uncomment to play the sweet tunes
-sound(mel2, fe)
+sound(mel1, fe)
 
    %% Plot the melody on a Time/Amplitude axis
 close all
@@ -25,7 +25,12 @@ figure, subplot(2,1,1), plot(T, mel1), title('melody 1'), ylabel('amplitude (V)'
 subplot(2,1,2), plot(T(800:1100), mel1(800:1100)), title('melody 1 zoomed in'), ylabel('amplitude (V)'), xlabel('time (sec)') ;
 
    %% Plots of pitch and intensity profile
-close all  
+close all
+
+   % load the files and get the frequencis
+[mel1, fe] = audioread('melody_1.wav') ;
+mel2 = audioread('melody_2.wav') ;        
+mel3 = audioread('melody_3.wav') ;
 
    % uncomment to create the frIsequence matrix from the audio
 winlen = 0.03 ;
@@ -33,29 +38,28 @@ frIsequence1 = GetMusicFeatures(mel1, fe, winlen) ;
 frIsequence2 = GetMusicFeatures(mel2, fe, winlen) ;
 frIsequence3 = GetMusicFeatures(mel3, fe, winlen) ;
 
-
    % get the abscisses (number of windows)
 abs1 = (1:length(frIsequence1)) ;
 abs2 = (1:length(frIsequence2)) ;
 abs3 = (1:length(frIsequence3)) ;
 
-   % plot pitch
+   % plot pitch and intensity
 figure
-subplot(3,1,1)
-[ax, ~, ~] = plotyy(abs1, log(frIsequence1(1,:)), abs1, log(frIsequence1(3,:)));
+subplot(311)
+[ax, ~, ~] = plotyy(abs1, frIsequence1(1,:), abs1, frIsequence1(3,:));
 title('melody 1'),
 ylabel(ax(1),'pitch (Hz)') % label left y-axis
 ylabel(ax(2),'Intensity') % label right y-axis
 xlabel('window number') ;
 
-subplot(3,1,2)
+subplot(312)
 [ax, ~, ~] = plotyy(abs2, frIsequence2(1,:), abs2, frIsequence2(3,:));
 title('melody 2'),
 ylabel(ax(1),'pitch (Hz)') % label left y-axis
 ylabel(ax(2),'Intensity') % label right y-axis
 xlabel('window number') ;
 
-subplot(3,1,3)
+subplot(313)
 [ax, ~, ~] = plotyy(abs3, frIsequence3(1,:), abs3, frIsequence3(3,:)); 
 title('melody 3'), 
 ylabel(ax(1),'pitch (Hz)') % label left y-axis
