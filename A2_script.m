@@ -6,9 +6,9 @@ clc
 %% Load 3 recordings
 
    % load the files and get the frequencis
-% [mel1, fe] = audioread('melody_1.wav') ;
-% mel2 = audioread('melody_2.wav') ;        
-% mel3 = audioread('melody_3.wav') ;
+[mel1, fe] = audioread('melody_1.wav') ;
+mel2 = audioread('melody_2.wav') ;        
+mel3 = audioread('melody_3.wav') ;
 
    % create the vector of frequencies of from the 1st to the 4th scale
 frequencies = [ 65.41 , 69.30 , 73.42, 77.78, 82.41, 87.31, 92.50, 98.80, 103.83, 110.00, 116.54, 123.47, 130.81, 138.59, 146.83, 155.56, 164.81, 174.61, 185.00, 196.00, 207.65, 220.00, 233.09, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88 ]  ;
@@ -102,9 +102,11 @@ binnote3 = intensity3 >= mean3 == 1 ;
 
    %% Call feature extractor
 close all
+clc
 
-frIsequence = frIsequence3 ;
-abs = abs3 ;
+
+frIsequence = frIsequence2 ;
+abs = abs2 ;
 
   % Isolate the log-pitch and the log-intensity
 pitch = 1.5*frIsequence(1,:) ;
@@ -168,7 +170,15 @@ for i = 1:max(binnote_label)
    % verify that the note is not too short (it can be noise)
    if lengthnote >= 10
         pitch_notei = pitch_notei(1+round(0.15*lengthnote):lengthnote-round(0.15*lengthnote)) ;
-        notes = [ notes mean(pitch_notei) ] ;
+        lengthnote = length(pitch_notei) ;
+            % We check if this note is not two notes
+        meanstart = mean(pitch_notei(1:round(lengthnote/2))) ;
+        meanend = mean(pitch_notei(round(lengthnote/2):end)) ;
+        if sqrt(log(meanstart/meanend)*log(meanstart/meanend)) > 0.05
+            notes = [ notes meanstart meanend ] ;
+        else
+            notes = [ notes mean(pitch_notei) ] ;
+        end
         
 %         subplot(max(binnote_label), 1, i)
 %         plot(pitch_notei) ;
@@ -197,19 +207,46 @@ end
 
    
     %% plot features
-close all
-
-figure
-subplot(411)
-stem(quotnotes1)
-subplot(412)
-stem(quotnotes2)
-subplot(413)
-stem(quotnotes3)
-subplot(414)
-stem(quotnotes4)
-
-figure
-plot(1:10, quotnotes1, 1:9, quotnotes2) %, 1:9, quotnotes3, 1:9, quotnotes4) 
     
+    close all
+clc
+
+   % uncomment to load the files and get the frequencies
+% [mel1, fe] = audioread('melody_1.wav') ;
+% mel2 = audioread('melody_2.wav') ;        
+% mel3 = audioread('melody_3.wav') ;
+% 
+%    % uncomment to create the frIsequence matrix from the audio
+% winlen = 0.03 ;
+% frIsequence1 = GetMusicFeatures(mel1, fe, winlen) ;
+% frIsequence2 = GetMusicFeatures(mel2, fe, winlen) ;
+% frIsequence3 = GetMusicFeatures(mel3, fe, winlen) ;
+% frIsequence4 = frIsequence1 ; frIsequence4(1,:) = 1.5*frIsequence4(1,:) ;
+% frIsequence5 = frIsequence2 ; frIsequence5(1,:) = 1.5*frIsequence5(1,:) ;
+% frIsequence6 = frIsequence3 ; frIsequence6(1,:) = 1.5*frIsequence6(1,:) ;
+
+%     Get features
+features1 = GetFeatures(frIsequence1) ;
+features2 = GetFeatures(frIsequence2) ;   
+features3 = GetFeatures(frIsequence3) ;
+features4 = GetFeatures(frIsequence4) ;
+features5 = GetFeatures(frIsequence5) ;
+features6 = GetFeatures(frIsequence6) ;
+
+figure
+plot(1:length(features1), features1,1:length(features2), features2, 1:length(features3), features3),
+title('Feature extraction of mel1, mel2 and mel3')
+xlabel('Length of feature vectors'), ylabel('Amplitude of feature vector')
+axis( [ 1 10 0 20 ] )
+
+figure
+subplot(311)
+plot(1:length(features1), features1, 1:length(features4), features4)
+title('Features vector of melody 1 with and without transposed pitch')
+subplot(312)
+plot(1:length(features2), features2, 1:length(features5), features5)
+title('Features vector of melody 1 with and without transposed pitch')
+subplot(313)
+plot(1:length(features3), features3, 1:length(features6), features6)
+title('Features vector of melody 1 with and without transposed pitch')
     
